@@ -9,7 +9,7 @@ module Protocol
 
       def initialize(id:, error:)
         unless id.nil? || id.is_a?(String) || id.is_a?(Numeric)
-          raise InvalidRequestError.new("ID must be nil, string or number", id)
+          raise InvalidRequestError.new("ID must be nil, string or number", id: id)
         end
 
         error = Error.wrap(error)

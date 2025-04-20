@@ -45,21 +45,21 @@ server = Protocol::Jsonrpc::Connection.new(Protocol::Jsonrpc::Framer.new(server_
 
 # Client sends a request
 subtract = Protocol::Jsonrpc::RequestMessage.new(method: "subtract", params: [42, 23])
-client.write_message(subtract)
+client.write(subtract)
 
 # Server reads the request
-message = server.read_message
-puts "Received method: #{message.method} with params: #{message.params.inspect}"
+message = server.read
+# => <#Protocol::Jsonrpc::RequestMessage id:"...", method: "subtract", params: [42, 23]>
 
 # Server processes the request (calculating the result)
 result = message.params.inject(:-) if message.method == "subtract"
 
 # Server sends a response
-server.write_message(message.reply(result))
+server.write(message.reply(result))
 
 # Client reads the response
-response = client.read_message
-puts "Result: #{response.result}" # => 19
+response = client.read
+response.result # => 19
 
 # Close connections
 client.close
@@ -92,17 +92,17 @@ pending_requests = {}
 
 # Main server loop
 begin
-  while (message = connection.read_message)
+  while (message = connection.read)
     case message
     when Protocol::Jsonrpc::RequestMessage
       puts "Received request: #{message.method}"
 
       if handlers.key?(message.method)
         result = handlers[message.method].call(message.params)
-        connection.write_message(message.reply(result))
+        connection.write(message.reply(result))
       else
         error = Protocol::Jsonrpc::MethodNotFoundError.new
-        connection.write_message(message.reply(error))
+        connection.write(message.reply(error))
       end
 
     when Protocol::Jsonrpc::NotificationMessage
@@ -167,7 +167,7 @@ Typically created by replying to a request:
 
 ```ruby
 # From a request object
-response = request.reply(result)
+response = request.reply(19)
 
 # Or directly
 response = Protocol::Jsonrpc::ResponseMessage.new(
@@ -206,27 +206,58 @@ batch = [
 ]
 
 # Send batch request
-client.write_message(batch)
+client.write(batch)
 
 # Process batch on server
-batch_response = []
-message_batch = server.read_message
-message_batch.each do |msg|
+messages = server.read
+
+batch_response = messages.filter_map do |msg|
   case msg
   when Protocol::Jsonrpc::RequestMessage
     # Only add responses for requests, not notifications
     if msg.method == "sum"
-      batch_response << msg.reply(msg.params.sum)
+      msg.reply(msg.params.sum)
     elsif msg.method == "subtract"
-      batch_response << msg.reply(msg.params.reduce(:-))
+      msg.reply(msg.params.reduce(:-))
     else
-      batch_response << msg.reply(Protocol::Jsonrpc::MethodNotFoundError.new)
+      msg.reply(Protocol::Jsonrpc::MethodNotFoundError.new)
     end
+  when Protocol::Jsonrpc::NotificationMessage
+    handle_notification(msg)
+    nil
   end
 end
 
 # Send batch response if not empty
-server.write_message(batch_response) unless batch_response.empty?
+server.write(batch_response) unless batch_response.empty?
+```
+
+## Custom Framers
+
+The supplied Framer is designed for a bidirectional socket.
+You can also supply your own framer:
+
+```ruby
+class MyFramer
+  def flush; end
+  def close; end
+
+  # Return an object that response to unpack
+  def read_frame
+  end
+
+  # Accepts a
+  def write_frame(frame)
+  end
+end
+
+
+client = Protocol::Jsonrpc::Connection.new(MyFramer.new)
+client.read # calls read_frame, calling unpack on the returned object
+
+message = Protocol::Jsonrpc::NotificationMessage.new(method: "hello", params: ["world"])
+client.write(message) # calls write_frame with any message responding to `as_json`
+
 ```
 
 ## Development

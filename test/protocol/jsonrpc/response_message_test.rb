@@ -46,6 +46,7 @@ module Protocol
           result: { status: "success" }
         }
         assert_equal expected, response.to_h
+        assert_equal expected, response.as_json
       end
 
       def test_to_h_with_nil_result
@@ -56,16 +57,7 @@ module Protocol
           result: nil
         }
         assert_equal expected, response.to_h
-      end
-
-      def test_to_json
-        response = ResponseMessage.new(id: "request_id", result: { status: "success" })
-        expected = {
-          jsonrpc: "2.0",
-          id: "request_id",
-          result: { status: "success" }
-        }
-        assert_equal JSON.generate(expected), response.to_json
+        assert_equal expected, response.as_json
       end
 
       def test_id_present

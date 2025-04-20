@@ -24,20 +24,20 @@ module Protocol
       # @param id [String, Integer] The request ID
       # @param error [Hash] The error data from the JSON-RPC response
       # @return [Error] The appropriate error instance
-      def self.from_message(code:, message:, data: nil)
+      def self.from_message(code:, message:, data: nil, id: nil)
         case code
         when PARSE_ERROR
-          ParseError.new(message, data)
+          ParseError.new(message, data:, id:)
         when INVALID_REQUEST
-          InvalidRequestError.new(message, data)
+          InvalidRequestError.new(message, data:, id:)
         when METHOD_NOT_FOUND
-          MethodNotFoundError.new(message, data)
+          MethodNotFoundError.new(message, data:, id:)
         when INVALID_PARAMS
-          InvalidParamsError.new(message, data)
+          InvalidParamsError.new(message, data:, id:)
         when INTERNAL_ERROR
-          InternalError.new(message, data)
+          InternalError.new(message, data:, id:)
         else
-          new(message, data)
+          new(message, data:, id:)
         end
       end
 
@@ -49,23 +49,24 @@ module Protocol
         in Jsonrpc::Error
           error
         in JSON::ParserError
-          ParseError.new(error.message, error)
+          ParseError.new(error.message, data: error)
         in StandardError
-          InternalError.new(error.message, error)
+          InternalError.new(error.message, data: error)
         else
           raise error
         end
       end
 
-      attr_reader :data, :code
+      attr_reader :data, :code, :id
 
-      def initialize(message = nil, data = nil)
+      def initialize(message = nil, data: nil, id: nil)
         message = nil if message&.empty?
         super([MESSAGES[code], message].compact.uniq.join(": "))
         @data = data
+        @id = id
       end
 
-      def to_response(id: nil)
+      def reply(id: @id)
         ErrorMessage.new(id:, error: self)
       end
 

@@ -10,13 +10,13 @@ module Protocol
 
       def initialize(method:, params: nil, id: SecureRandom.uuid)
         unless method.is_a?(String)
-          raise InvalidRequestError.new("Method must be a string", method.inspect)
+          raise InvalidRequestError.new("Method must be a string", data: method.inspect)
         end
         unless params.nil? || params.is_a?(Array) || params.is_a?(Hash)
-          raise InvalidRequestError.new("Params must be an array or object", params.inspect)
+          raise InvalidRequestError.new("Params must be an array or object", data: params.inspect)
         end
         unless id.is_a?(String) || id.is_a?(Numeric)
-          raise InvalidRequestError.new("ID must be a string or number", id)
+          raise InvalidRequestError.new("ID must be a string or number", id:)
         end
 
         super(method:, params:, id:)
@@ -26,10 +26,6 @@ module Protocol
         h = super.merge(id:, method:)
         h[:params] = params if params
         h
-      end
-
-      def reply(result)
-        ResponseMessage.new(id:, result:)
       end
 
       def response?() = false

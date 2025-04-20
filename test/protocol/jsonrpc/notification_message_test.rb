@@ -48,7 +48,7 @@ module Protocol
         assert_equal expected, notification.to_h
       end
 
-      def test_to_json
+      def test_as_json
         notification = NotificationMessage.new(
           method: "test_notification",
           params: { event: "updated" }
@@ -58,7 +58,7 @@ module Protocol
           method: "test_notification",
           params: { event: "updated" }
         }
-        assert_equal JSON.generate(expected), notification.to_json
+        assert_equal expected, notification.as_json
       end
 
       def test_empty_params_are_nil_in_hash

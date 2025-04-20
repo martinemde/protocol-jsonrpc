@@ -29,15 +29,14 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "subtract", "params": [42, 23], "id": 1}
       # <-- {"jsonrpc": "2.0", "result": 19, "id": 1}
       def test_request_with_positional_parameters
-        puts "test_request_with_positional_parameters"
         subtract = RequestMessage.new(method: "subtract", params: [42, 23])
-        @client.write_message(subtract)
+        @client.write(subtract)
 
-        message = @server.read_message
+        message = @server.read
         assert_equal subtract, message
-        @server.write_message(message.reply(19))
+        @server.write(message.reply(19))
 
-        response = @client.read_message
+        response = @client.read
         assert_equal 19, response.result
       end
 
@@ -45,15 +44,14 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "subtract", "params": {"subtrahend": 23, "minuend": 42}, "id": 3}
       # <-- {"jsonrpc": "2.0", "result": 19, "id": 3}
       def test_request_with_named_parameters
-        puts "test_request_with_named_parameters"
         subtract = RequestMessage.new(method: "subtract", params: { subtrahend: 23, minuend: 42 })
-        @client.write_message(subtract)
+        @client.write(subtract)
 
-        message = @server.read_message
+        message = @server.read
         assert_equal subtract, message
-        @server.write_message(message.reply(19))
+        @server.write(message.reply(19))
 
-        response = @client.read_message
+        response = @client.read
         assert_equal 19, response.result
       end
 
@@ -61,17 +59,16 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "update", "params": [1,2,3,4,5]}
       # --> {"jsonrpc": "2.0", "method": "foobar"}
       def test_notification
-        puts "test_notification"
         update = NotificationMessage.new(method: "update", params: [1, 2, 3, 4, 5])
-        @client.write_message(update)
+        @client.write(update)
 
-        message = @server.read_message
+        message = @server.read
         assert_equal update, message
 
         foobar = NotificationMessage.new(method: "foobar")
-        @client.write_message(foobar)
+        @client.write(foobar)
 
-        message = @server.read_message
+        message = @server.read
         assert_equal foobar, message
       end
 
@@ -79,16 +76,15 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "foobar", "id": "1"}
       # <-- {"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}, "id": "1"}
       def test_method_not_found_error
-        puts "test_method_not_found_error"
         foobar = RequestMessage.new(method: "foobar")
-        @client.write_message(foobar)
+        @client.write(foobar)
 
-        message = @server.read_message
+        message = @server.read
         assert_equal foobar, message
 
-        @server.write_message(message.reply(MethodNotFoundError.new))
+        @server.write(message.reply(MethodNotFoundError.new))
 
-        response = @client.read_message
+        response = @client.read
         assert_instance_of ErrorMessage, response
         assert_equal Error::METHOD_NOT_FOUND, response.error.code
         assert_equal "Method not found", response.error.message
@@ -98,7 +94,6 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "foobar, "params": "bar", "baz]
       # <-- {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": null}
       def test_parse_error
-        puts "test_parse_error"
         # For parse errors, we can't use the Connection object directly since it would catch the parse error
         # Instead, we'll write invalid JSON directly to the socket
         @client_socket.write(<<~MESSAGE)
@@ -106,7 +101,7 @@ module Protocol
         MESSAGE
         @client_socket.flush
 
-        error = assert_raises(ParseError) { @server.read_message }
+        error = assert_raises(ParseError) { @server.read }
         assert_equal Error::PARSE_ERROR, error.code
         assert_match(/Parse error/, error.message)
       end
@@ -115,14 +110,13 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": 1, "params": "bar"}
       # <-- {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}
       def test_invalid_request_error
-        puts "test_invalid_request_error"
         # For invalid request errors, we need to send a valid JSON but invalid request
         @client_socket.write(<<~MESSAGE)
           {"jsonrpc": "2.0", "method": 1, "params": "bar"}
         MESSAGE
         @client_socket.flush
 
-        error = assert_raises(InvalidRequestError) { @server.read_message }
+        error = assert_raises(InvalidRequestError) { @server.read }
         assert_equal Error::INVALID_REQUEST, error.code
         assert_equal "Invalid Request: Method must be a string", error.message
       end
@@ -134,18 +128,17 @@ module Protocol
       # ]
       # <-- {"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": null}
       def test_batch_request_with_invalid_json
-        puts "test_batch_request_with_invalid_json"
         @client_socket.write(<<~MESSAGE)
           [{"jsonrpc": "2.0", "method": "sum", "params": [1,2,4], "id": "1"},{"jsonrpc": "2.0", "method"]
         MESSAGE
         @client_socket.flush
 
-        assert_raises(ParseError) { @server.read_message }
+        assert_raises(ParseError) { @server.read }
 
-        response = ParseError.new("Parse error").to_response(id: nil)
-        @server.write_message(response)
+        response = ParseError.new("Parse error").reply
+        @server.write(response)
 
-        response = @client.read_message
+        response = @client.read
         assert_instance_of ErrorMessage, response
         assert_equal Error::PARSE_ERROR, response.error.code
         assert_match(/Parse error/, response.error.message)
@@ -156,18 +149,17 @@ module Protocol
       # --> []
       # <-- {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}
       def test_empty_batch_request
-        puts "test_empty_batch_request"
         @client_socket.write(<<~MESSAGE)
           []
         MESSAGE
         @client_socket.flush
 
-        assert_raises(InvalidRequestError) { @server.read_message }
+        assert_raises(InvalidRequestError) { @server.read }
 
-        response = InvalidRequestError.new("Invalid Request").to_response(id: nil)
-        @server.write_message(response)
+        response = InvalidRequestError.new("Invalid Request").reply
+        @server.write(response)
 
-        response = @client.read_message
+        response = @client.read
         assert_instance_of ErrorMessage, response
         assert_equal Error::INVALID_REQUEST, response.error.code
         assert_match(/Invalid Request/, response.error.message)
@@ -180,18 +172,21 @@ module Protocol
       #   {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}
       # ]
       def test_invalid_batch_request
-        puts "test_invalid_batch_request"
         @client_socket.write(<<~MESSAGE)
           [1]
         MESSAGE
         @client_socket.flush
 
-        assert_raises(InvalidRequestError) { @server.read_message }
+        messages = @server.read
+        assert_instance_of InvalidRequestError, messages[0]
 
-        response = InvalidRequestError.new("Invalid Request").to_response(id: nil)
-        @server.write_message(response)
+        response = messages.map do |message|
+          message.reply
+        end
 
-        response = @client.read_message
+        @server.write(response)
+
+        response = @client.read
         assert_instance_of Array, response
         assert_equal 1, response.length
         error_response = response.first
@@ -210,18 +205,23 @@ module Protocol
       #   {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}
       # ]
       def test_multiple_invalid_batch_request
-        puts "test_multiple_invalid_batch_request"
         @client_socket.write(<<~MESSAGE)
           [1,2,3]
         MESSAGE
         @client_socket.flush
 
-        assert_raises(InvalidRequestError) { @server.read_message }
+        messages = @server.read
+        assert_equal 3, messages.length
+        assert_instance_of InvalidRequestError, messages[0]
+        assert_instance_of InvalidRequestError, messages[1]
+        assert_instance_of InvalidRequestError, messages[2]
 
-        response = InvalidRequestError.new("Invalid Request").to_response(id: nil)
-        @server.write_message(response)
+        response = messages.map do |message|
+          message.reply
+        end
+        @server.write(response)
 
-        response = @client.read_message
+        response = @client.read
         assert_instance_of Array, response
         assert_equal 3, response.length
 
@@ -250,7 +250,6 @@ module Protocol
       #       {"jsonrpc": "2.0", "result": ["hello", 5], "id": "9"}
       #   ]
       def test_batch_request
-        puts "test_batch_request"
         batch = [
           RequestMessage.new(method: "sum", params: [1, 2, 4], id: "1"),
           NotificationMessage.new(method: "notify_hello", params: [7]),
@@ -260,9 +259,9 @@ module Protocol
           RequestMessage.new(method: "get_data", id: "9")
         ]
 
-        @client.write_message(batch)
+        @client.write(batch)
 
-        message = @server.read_message
+        message = @server.read
         assert_instance_of Array, message
         assert_equal 6, message.length
 
@@ -270,14 +269,14 @@ module Protocol
         batch_response = [
           message[0].reply(7),
           message[2].reply(19),
-          InvalidRequestError.new("Invalid Request").to_response(id: nil),
+          InvalidRequestError.new("Invalid Request").reply,
           message[4].reply(MethodNotFoundError.new("Method not found")),
           message[5].reply(["hello", 5])
         ]
 
-        @server.write_message(batch_response)
+        @server.write(batch_response)
 
-        response = @client.read_message
+        response = @client.read
         assert_instance_of Array, response
         assert_equal 5, response.length
 
@@ -295,15 +294,14 @@ module Protocol
       #   ]
       # <-- //Nothing is returned for all notification batches
       def test_batch_notification
-        puts "test_batch_notification"
         batch = [
           NotificationMessage.new(method: "notify_sum", params: [1, 2, 4]),
           NotificationMessage.new(method: "notify_hello", params: [7])
         ]
 
-        @client.write_message(batch)
+        @client.write(batch)
 
-        message = @server.read_message
+        message = @server.read
         assert_instance_of Array, message
         assert_equal 2, message.length
         assert message.all? { |req| req.is_a?(NotificationMessage) }

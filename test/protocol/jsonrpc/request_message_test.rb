@@ -18,7 +18,7 @@ module Protocol
           method: "test_method"
         }
         assert_equal expected, request.to_h
-        assert_equal JSON.generate(expected), request.to_json
+        assert_equal expected, request.as_json
       end
 
       def test_with_all_parameters
@@ -38,7 +38,7 @@ module Protocol
           params: { foo: "bar" }
         }
         assert_equal expected, request.to_h
-        assert_equal JSON.generate(expected), request.to_json
+        assert_equal expected, request.as_json
       end
 
       def test_with_array_params
@@ -58,7 +58,7 @@ module Protocol
           params: [1, 2, 3]
         }
         assert_equal expected, request.to_h
-        assert_equal JSON.generate(expected), request.to_json
+        assert_equal expected, request.as_json
       end
 
       def test_raises_on_nil_id

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require_relative "message"
 
 module Protocol
@@ -12,39 +11,48 @@ module Protocol
         @framer = framer
       end
 
-      # Write a message to the framer
-      # @param message [Protocol::Jsonrpc::Message] The message to write
-      # @return [Boolean] True if successful
-      def write_message(message)
-        @framer.write_message(message)
-        true
-      end
-
-      # Read a message from the framer
-      # @yield [Protocol::Jsonrpc::Message] The read message
-      # @return [Protocol::Jsonrpc::Message] The read message
-      def read_message(&)
-        @framer.read_message(&)
+      def flush
+        @framer.flush
       end
 
       def close
         @framer.close
       end
 
-      def receive_request(request)
-        write(request.reply(result))
+      # Read a message from the framer
+      # @yield [Protocol::Jsonrpc::Message] The read message
+      # @return [Protocol::Jsonrpc::Message] The read message
+      def read(&block)
+        flush
+        frame = read_frame
+        message = Message.load(frame.unpack)
+        yield message if block_given?
+        message
       end
 
-      def receive_notification(notification)
-        nil
+      # Write a message to the framer
+      # @param message [Protocol::Jsonrpc::Message, Array<Protocol::Jsonrpc::Message>] The message(s) to write
+      # @return [Boolean] True if successful
+      def write(message)
+        frame = Frame.pack(message)
+        write_frame(frame)
+        true
       end
 
-      def receive_response(response)
-        response
+      # Low level read a frame from the framer
+      # @yield [Protocol::Jsonrpc::Frame] The read frame
+      # @return [Protocol::Jsonrpc::Frame] The read frame
+      def read_frame(&)
+        frame = @framer.read_frame
+        yield frame if block_given?
+        return frame
       end
 
-      def receive_error(error)
-        error
+      # Low level write a frame to the framer
+      # @param frame [Protocol::Jsonrpc::Frame] The frame to write
+      # @return [Boolean] True if successful
+      def write_frame(frame)
+        @framer.write_frame(frame)
       end
     end
   end

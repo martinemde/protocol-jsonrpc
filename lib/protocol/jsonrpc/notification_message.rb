@@ -11,10 +11,10 @@ module Protocol
         super(method:, params:)
 
         unless method.is_a?(String)
-          raise InvalidRequestError.new("Method must be a string", method.inspect)
+          raise InvalidRequestError.new("Method must be a string", data: method.inspect)
         end
         unless params.nil? || params.is_a?(Array) || params.is_a?(Hash)
-          raise InvalidRequestError.new("Params must be an array or object", params.inspect)
+          raise InvalidRequestError.new("Params must be an array or object", data: params.inspect)
         end
       end
 

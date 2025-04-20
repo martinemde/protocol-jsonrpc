@@ -1,25 +1,27 @@
 # frozen_string_literal: true
 
-require "protocol/jsonrpc/message"
+require "protocol/jsonrpc/frame"
 
 module Protocol
   module Jsonrpc
     class Framer
-      def initialize(stream)
+      def initialize(stream, frame_class: Frame)
         @stream = stream
+        @frame_class = frame_class
       end
 
-      # Read a message from the stream
-      def read_message(&)
-        @stream.flush
-        message = Message.read(@stream)
-        yield message if block_given?
-        message
+      # Read a frame from the stream
+      # @return [Frame] The parsed frame
+      def read_frame(&block)
+        frame = @frame_class.read(@stream)
+        yield frame if block_given?
+        frame
       end
 
-      # Write a message to the stream
-      def write_message(message)
-        @stream.write(message.to_json + "\n")
+      # Write a frame to the stream
+      # @param frame [Frame] The frame to write
+      def write_frame(frame)
+        frame.write(@stream)
       end
 
       # Flush the stream
@@ -27,6 +29,7 @@ module Protocol
         @stream.flush
       end
 
+      # Close the stream
       def close
         @stream.close
       end

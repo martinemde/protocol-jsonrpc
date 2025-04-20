@@ -56,7 +56,7 @@ module Protocol
         assert_equal expected, response.to_h
       end
 
-      def test_to_json
+      def test_as_json
         error = { code: -32600, message: "Invalid Request" }
         response = ErrorMessage.new(id: "request_id", error: error)
         expected = {
@@ -64,7 +64,7 @@ module Protocol
           id: "request_id",
           error: { code: -32600, message: "Invalid Request" }
         }
-        assert_equal JSON.generate(expected), response.to_json
+        assert_equal expected, response.as_json
       end
 
       def test_id_present_with_id
