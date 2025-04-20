@@ -9,8 +9,6 @@ module Protocol
       include Message
 
       def initialize(method:, params: nil, id: SecureRandom.uuid)
-        super(method:, params:, id:)
-
         unless method.is_a?(String)
           raise InvalidRequestError.new("Method must be a string", method.inspect)
         end
@@ -20,6 +18,8 @@ module Protocol
         unless id.is_a?(String) || id.is_a?(Numeric)
           raise InvalidRequestError.new("ID must be a string or number", id)
         end
+
+        super(method:, params:, id:)
       end
 
       def to_h()

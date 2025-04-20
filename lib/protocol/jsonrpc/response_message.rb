@@ -8,10 +8,11 @@ module Protocol
       include Message
 
       def initialize(id:, result:)
-        super
         unless id.nil? || id.is_a?(String) || id.is_a?(Numeric)
           raise InvalidRequestError.new("ID must be nil, string or number", id)
         end
+
+        super
       end
 
       def to_h() = super.merge(id:, result:)

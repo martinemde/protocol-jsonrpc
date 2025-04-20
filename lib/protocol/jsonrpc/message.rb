@@ -45,12 +45,18 @@ module Protocol
           raise ParseError.new("Failed to parse message: #{e.message}", message)
         end
 
-        # This is wrong, it seems like we need to parse each message
-        # in the array fully, collecting the entire result and then
-        # returning the array of results.
+        # This is wrong. It seems like we need something more like
+        # an enumerator where we can run the full parse, handle, response
+        # cycle for each item in the array, aggregating the results and
+        # errors and then returning the array.
+        #
         # The problem is that the errors should get raised and then
-        # handled by our responder which turns them into ErrorMessages
-        # and then the errors get returned to the client.
+        # handled which turns them into ErrorMessages and then the errors
+        # get returned to the client.
+        #
+        # Ideally this array handling would be invisible to the connection
+        # which would just handle one at a time with the array wrapper
+        # being applied by a single place that handles the batching.
         def from_array(array)
           raise InvalidRequestError.new("Empty batch", array) if array.empty?
 
@@ -96,7 +102,7 @@ module Protocol
         if result_or_error.is_a?(StandardError)
           ErrorMessage.new(id:, error: result_or_error)
         else
-          reply(result_or_error)
+          ResponseMessage.new(id:, result: result_or_error)
         end
       end
     end
