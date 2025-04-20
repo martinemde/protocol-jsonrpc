@@ -18,8 +18,9 @@ module Protocol
         super
       end
 
-      def to_h() = super.merge(id:, result:)
-      def response?() = true
+      def to_h = super.merge(id:, result:)
+
+      def response? = true
     end
   end
 end

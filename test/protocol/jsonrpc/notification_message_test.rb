@@ -15,10 +15,10 @@ module Protocol
       def test_initialize_with_hash_params
         notification = NotificationMessage.new(
           method: "test_notification",
-          params: { event: "updated", data: { id: 123 } }
+          params: {event: "updated", data: {id: 123}}
         )
         assert_equal "test_notification", notification.method
-        assert_equal({ event: "updated", data: { id: 123 } }, notification.params)
+        assert_equal({event: "updated", data: {id: 123}}, notification.params)
       end
 
       def test_initialize_with_array_params
@@ -38,12 +38,12 @@ module Protocol
       def test_to_h
         notification = NotificationMessage.new(
           method: "test_notification",
-          params: { event: "updated" }
+          params: {event: "updated"}
         )
         expected = {
           jsonrpc: "2.0",
           method: "test_notification",
-          params: { event: "updated" }
+          params: {event: "updated"}
         }
         assert_equal expected, notification.to_h
       end
@@ -51,12 +51,12 @@ module Protocol
       def test_as_json
         notification = NotificationMessage.new(
           method: "test_notification",
-          params: { event: "updated" }
+          params: {event: "updated"}
         )
         expected = {
           jsonrpc: "2.0",
           method: "test_notification",
-          params: { event: "updated" }
+          params: {event: "updated"}
         }
         assert_equal expected, notification.as_json
       end

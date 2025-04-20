@@ -74,7 +74,7 @@ module Protocol
       end
 
       def to_h
-        h = { code:, message: }
+        h = {code:, message:}
         h[:data] = data if data
         h
       end

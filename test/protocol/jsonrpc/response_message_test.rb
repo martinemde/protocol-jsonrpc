@@ -42,11 +42,11 @@ module Protocol
       end
 
       def test_to_h
-        response = ResponseMessage.new(id: "request_id", result: { status: "success" })
+        response = ResponseMessage.new(id: "request_id", result: {status: "success"})
         expected = {
           jsonrpc: "2.0",
           id: "request_id",
-          result: { status: "success" }
+          result: {status: "success"}
         }
         assert_equal expected, response.to_h
         assert_equal expected, response.as_json
@@ -69,11 +69,11 @@ module Protocol
       end
 
       def test_as_json
-        response = ResponseMessage.new(id: "request_id", result: { status: "success" })
+        response = ResponseMessage.new(id: "request_id", result: {status: "success"})
         expected = {
           jsonrpc: "2.0",
           id: "request_id",
-          result: { status: "success" }
+          result: {status: "success"}
         }
         assert_equal expected, response.as_json
       end

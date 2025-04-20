@@ -17,11 +17,12 @@ module Protocol
 
         error = Error.wrap(error)
 
-        super(id:, error:)
+        super
       end
 
-      def to_h() = super.merge(id:, error: error.to_h)
-      def response?() = true
+      def to_h = super.merge(id:, error: error.to_h)
+
+      def response? = true
     end
   end
 end

@@ -51,11 +51,9 @@ module Protocol
           raise InvalidRequestError.new("Empty batch", data: array.inspect) if array.empty?
 
           array.map do |msg|
-            begin
-              from_hash(msg)
-            rescue => e
-              Error.wrap(e)
-            end
+            from_hash(msg)
+          rescue => e
+            Error.wrap(e)
           end
         end
 
@@ -80,12 +78,18 @@ module Protocol
         end
       end
 
-      def to_h() = { jsonrpc: JSONRPC_VERSION }
-      def to_hash() = to_h
-      def as_json() = to_h
+      def to_h = {jsonrpc: JSONRPC_VERSION}
+
+      def to_hash = to_h
+
+      def as_json = to_h
+
       def to_json(...) = JSON.generate(as_json, ...)
-      def to_s() = to_json
-      def response?() = false
+
+      def to_s = to_json
+
+      def response? = false
+
       def match?(message) = false
 
       def reply(result_or_error)

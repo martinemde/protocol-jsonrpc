@@ -11,7 +11,7 @@ module Protocol
       include Message
 
       def initialize(method:, params: nil)
-        super(method:, params:)
+        super
 
         unless method.is_a?(String)
           raise InvalidRequestError.new("Method must be a string", data: method.inspect)
@@ -21,15 +21,17 @@ module Protocol
         end
       end
 
-      def to_h()
+      def to_h
         h = super.merge(method:)
         h[:params] = params if params
         h
       end
 
       def id = nil
+
       def reply = nil
-      def response?() = false
+
+      def response? = false
     end
   end
 end

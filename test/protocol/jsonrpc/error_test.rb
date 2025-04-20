@@ -58,37 +58,37 @@ module Protocol
       end
 
       def test_error_with_data
-        data = { details: "Additional information" }
+        data = {details: "Additional information"}
         error = Error.from_message(code: Error::INTERNAL_ERROR, message: "Error", data:)
 
         assert_equal(data, error.data)
-        assert_equal({ code: Error::INTERNAL_ERROR, message: "Internal error: Error", data: data }, error.to_h)
+        assert_equal({code: Error::INTERNAL_ERROR, message: "Internal error: Error", data: data}, error.to_h)
       end
 
       def test_reply
-        error = ParseError.new("Test error", data: { details: "info" })
+        error = ParseError.new("Test error", data: {details: "info"})
         response = error.reply
 
         assert_instance_of(Jsonrpc::ErrorMessage, response)
         assert_nil response.id
         assert_equal(Error::PARSE_ERROR, response.error.code)
         assert_equal("Parse error: Test error", response.error.message)
-        assert_equal({ details: "info" }, response.error.data)
+        assert_equal({details: "info"}, response.error.data)
       end
 
       def test_reply_with_id
-        error = ParseError.new("Test error", data: { details: "info" }, id: "req-123")
+        error = ParseError.new("Test error", data: {details: "info"}, id: "req-123")
         response = error.reply
 
         assert_instance_of(Jsonrpc::ErrorMessage, response)
         assert_equal("req-123", response.id)
         assert_equal(Error::PARSE_ERROR, response.error.code)
         assert_equal("Parse error: Test error", response.error.message)
-        assert_equal({ details: "info" }, response.error.data)
+        assert_equal({details: "info"}, response.error.data)
       end
 
       def test_reply_with_id_arg
-        error = ParseError.new("Test error", data: { details: "info" }, id: "req-123")
+        error = ParseError.new("Test error", data: {details: "info"}, id: "req-123")
         response = error.reply(id: "req-456")
 
         assert_instance_of(Jsonrpc::ErrorMessage, response)

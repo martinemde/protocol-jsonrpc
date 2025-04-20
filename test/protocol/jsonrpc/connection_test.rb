@@ -47,7 +47,7 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "subtract", "params": {"subtrahend": 23, "minuend": 42}, "id": 3}
       # <-- {"jsonrpc": "2.0", "result": 19, "id": 3}
       def test_request_with_named_parameters
-        subtract = RequestMessage.new(method: "subtract", params: { subtrahend: 23, minuend: 42 })
+        subtract = RequestMessage.new(method: "subtract", params: {subtrahend: 23, minuend: 42})
         @client.write(subtract)
 
         message = @server.read
@@ -257,8 +257,8 @@ module Protocol
           RequestMessage.new(method: "sum", params: [1, 2, 4], id: "1"),
           NotificationMessage.new(method: "notify_hello", params: [7]),
           RequestMessage.new(method: "subtract", params: [42, 23], id: "2"),
-          { foo: "boo" }, # Invalid request
-          RequestMessage.new(method: "foo.get", params: { name: "myself" }, id: "5"),
+          {foo: "boo"}, # Invalid request
+          RequestMessage.new(method: "foo.get", params: {name: "myself"}, id: "5"),
           RequestMessage.new(method: "get_data", id: "9")
         ]
 

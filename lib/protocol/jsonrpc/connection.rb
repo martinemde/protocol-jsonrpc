@@ -48,7 +48,7 @@ module Protocol
       def read_frame(&)
         frame = @framer.read_frame
         yield frame if block_given?
-        return frame
+        frame
       end
 
       # Low level write a frame to the framer

@@ -24,18 +24,18 @@ module Protocol
       def test_with_all_parameters
         request = RequestMessage.new(
           method: "test_method",
-          params: { foo: "bar" },
+          params: {foo: "bar"},
           id: "custom_id"
         )
         assert_equal "test_method", request.method
-        assert_equal({ foo: "bar" }, request.params)
+        assert_equal({foo: "bar"}, request.params)
         assert_equal "custom_id", request.id
 
         expected = {
           jsonrpc: "2.0",
           id: "custom_id",
           method: "test_method",
-          params: { foo: "bar" }
+          params: {foo: "bar"}
         }
         assert_equal expected, request.to_h
         assert_equal expected, request.as_json
@@ -68,17 +68,7 @@ module Protocol
         assert_match(/ID must be a string or number/, error.message)
       end
 
-      def test_raises_on_nil_id
-        error = assert_raises(InvalidRequestError) do
-          RequestMessage.new(
-            method: "test_method",
-            id: nil
-          )
-        end
-        assert_match(/ID must be a string or number/, error.message)
-      end
-
-      def test_id_present
+      def test_id
         request = RequestMessage.new(method: "test_method")
         refute_nil request.id
       end

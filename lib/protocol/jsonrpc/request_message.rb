@@ -22,16 +22,16 @@ module Protocol
           raise InvalidRequestError.new("ID must be a string or number", id:)
         end
 
-        super(method:, params:, id:)
+        super
       end
 
-      def to_h()
+      def to_h
         h = super.merge(id:, method:)
         h[:params] = params if params
         h
       end
 
-      def response?() = false
+      def response? = false
     end
   end
 end
