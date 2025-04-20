@@ -7,6 +7,7 @@ require "standard/rake"
 Minitest::TestTask.create
 
 task default: %i[test standard]
+task lint: %i[standard]
 
 # Load custom tasks
 Dir.glob("lib/tasks/**/*.rake").each { |r| load r }
