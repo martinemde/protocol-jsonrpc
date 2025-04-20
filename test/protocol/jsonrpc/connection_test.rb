@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Released under the MIT License.
+# Copyright 2025 by Martin Emde
+
 require_relative "../../test_helper"
 require "socket"
 require "protocol/jsonrpc/connection"

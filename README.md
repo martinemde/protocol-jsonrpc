@@ -2,6 +2,9 @@
 
 A Ruby library for implementing JSON-RPC 2.0 protocol clients and servers.
 
+Design influenced by [protocol-websocket](https://github.com/socketry/protocol-websocket) by Samuel Williams ([@ioquatix](https://github.com/ioquatix)).
+Thanks Samuel!
+
 ## Installation
 
 Add the gem to your project:

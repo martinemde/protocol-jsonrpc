@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Released under the MIT License.
+# Copyright 2025 by Martin Emde
+
 require_relative "jsonrpc/version"
 require_relative "jsonrpc/error"
 require_relative "jsonrpc/message"
