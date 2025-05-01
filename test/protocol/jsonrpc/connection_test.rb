@@ -63,13 +63,13 @@ module Protocol
       # --> {"jsonrpc": "2.0", "method": "foobar"}
       def test_notification
         update = NotificationMessage.new(method: "update", params: [1, 2, 3, 4, 5])
+        foobar = NotificationMessage.new(method: "foobar")
+
         @client.write(update)
+        @client.write(foobar)
 
         message = @server.read
         assert_equal update, message
-
-        foobar = NotificationMessage.new(method: "foobar")
-        @client.write(foobar)
 
         message = @server.read
         assert_equal foobar, message
