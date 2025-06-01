@@ -4,7 +4,6 @@
 # Copyright 2025 by Martin Emde
 
 require "json"
-require_relative "error"
 
 module Protocol
   module Jsonrpc
@@ -20,7 +19,7 @@ module Protocol
         def read(stream)
           raw_json = stream.gets
           return nil if raw_json.nil?
-          new(raw_json:)
+          new(raw_json: raw_json.strip)
         end
 
         # Pack a message into a frame
@@ -48,9 +47,10 @@ module Protocol
       # @raise [ParseError] if the JSON is invalid
       def unpack
         JSON.parse(raw_json, symbolize_names: true)
-      rescue JSON::ParserError => e
-        raise ParseError.new("Failed to parse message: #{e.message}", data: raw_json)
       end
+
+      def to_json(...) = raw_json
+      def to_s = raw_json
 
       # Write the frame to a stream
       # @param stream [IO] The stream to write to

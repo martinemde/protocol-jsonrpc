@@ -13,11 +13,12 @@ module Protocol
   module Jsonrpc
     class FrameTest < Minitest::Test
       def test_read_from_stream
-        stream = StringIO.new('{"jsonrpc":"2.0","method":"test"}')
+        raw_json = '{"jsonrpc":"2.0","method":"test"}'
+        stream = StringIO.new(raw_json)
         frame = Frame.read(stream)
 
         assert_instance_of Frame, frame
-        assert_equal '{"jsonrpc":"2.0","method":"test"}', frame.raw_json
+        assert_equal raw_json, frame.raw_json
       end
 
       def test_read_from_stream_that_returns_nil
@@ -75,7 +76,8 @@ module Protocol
       end
 
       def test_unpack_valid_json
-        frame = Frame.new(raw_json: '{"jsonrpc":"2.0","method":"test","id":"123"}')
+        raw_json = '{"jsonrpc":"2.0","method":"test","id":"123"}'
+        frame = Frame.new(raw_json:)
         data = frame.unpack
 
         assert_equal({jsonrpc: "2.0", method: "test", id: "123"}, data)
@@ -83,11 +85,9 @@ module Protocol
 
       def test_unpack_invalid_json_raises_error
         frame = Frame.new(raw_json: '{invalid json}')
-        error = assert_raises(ParseError) do
+        assert_raises(JSON::ParserError) do
           frame.unpack
         end
-        assert_match(/Failed to parse message/, error.message)
-        assert_equal '{invalid json}', error.data
       end
 
       def test_write_to_stream
@@ -98,6 +98,22 @@ module Protocol
         stream.rewind
         written_content = stream.read
         assert_equal %({"jsonrpc":"2.0","method":"test"}\n), written_content
+      end
+
+      def test_to_json_returns_raw_json
+        raw_json = '{"jsonrpc":"2.0","method":"test","id":"123"}'
+        frame = Frame.new(raw_json: raw_json)
+
+        assert_equal raw_json, frame.to_json
+        assert_equal frame.raw_json, frame.to_json
+      end
+
+      def test_to_s_returns_raw_json
+        raw_json = '{"jsonrpc":"2.0","method":"test","id":"123"}'
+        frame = Frame.new(raw_json: raw_json)
+
+        assert_equal raw_json, frame.to_s
+        assert_equal frame.raw_json, frame.to_s
       end
     end
   end

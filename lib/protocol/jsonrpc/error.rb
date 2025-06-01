@@ -15,7 +15,7 @@ module Protocol
       INVALID_PARAMS = -32_602
       INTERNAL_ERROR = -32_603
 
-      MESSAGES = Hash.new("Error").merge(
+      ERROR_MESSAGES = Hash.new("Error").merge(
         PARSE_ERROR => "Parse error",
         INVALID_REQUEST => "Invalid Request",
         METHOD_NOT_FOUND => "Method not found",
@@ -44,17 +44,21 @@ module Protocol
         end
       end
 
-      def self.wrap(error)
+      def self.wrap(error, data: nil, id: nil)
         case error
+        in nil
+          InvalidRequestError.new(data:, id:)
+        in String
+          InternalError.new(error, data:, id:)
         in Hash
           error = error.transform_keys(&:to_sym)
-          from_message(**error)
+          from_message(id: id, data: data, **error)
         in Jsonrpc::Error
           error
         in JSON::ParserError
-          ParseError.new(error.message, data: error)
+          ParseError.new("Parse error: #{error.message}", data:, id:)
         in StandardError
-          InternalError.new(error.message, data: error)
+          InternalError.new(error.message, data:, id:)
         else
           raise error
         end
@@ -64,13 +68,14 @@ module Protocol
 
       def initialize(message = nil, data: nil, id: nil)
         message = nil if message&.empty?
-        super([MESSAGES[code], message].compact.uniq.join(": "))
+        message ||= ERROR_MESSAGES[code]
+        super(message)
         @data = data
         @id = id
       end
 
       def reply(id: @id)
-        ErrorMessage.new(id:, error: self)
+        ErrorResponse.new(id:, error: self)
       end
 
       def to_h

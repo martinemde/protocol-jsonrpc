@@ -3,24 +3,18 @@
 # Released under the MIT License.
 # Copyright 2025 by Martin Emde
 
-require_relative "message"
-
 module Protocol
   module Jsonrpc
-    ErrorMessage = Data.define(:id, :error) do
+    Response = Data.define(:id, :result, :jsonrpc) do
       include Message
 
-      def initialize(id:, error:)
+      def initialize(id:, result:, jsonrpc: JSONRPC_VERSION)
         unless id.nil? || id.is_a?(String) || id.is_a?(Numeric)
-          raise InvalidRequestError.new("ID must be nil, string or number", id: id)
+          raise InvalidRequestError.new("ID must be nil, string, or number", id:)
         end
-
-        error = Error.wrap(error)
 
         super
       end
-
-      def to_h = super.merge(id:, error: error.to_h)
 
       def response? = true
     end

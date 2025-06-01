@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "protocol/jsonrpc/error_message"
+require "protocol/jsonrpc/error_response"
 
 module Protocol
   module Jsonrpc
-    class ErrorResponseTest < Minitest::Test
+    class ErrorResponseResponseTest < Minitest::Test
       def test_initialize_with_required_parameters
         error = {code: -32600, message: "Invalid Request"}
-        response = ErrorMessage.new(id: "request_id", error: error)
+        response = ErrorResponse.new(id: "request_id", error: error)
         assert_equal "request_id", response.id
         assert_equal error, response.error.to_h
       end
@@ -22,21 +22,21 @@ module Protocol
             param: "id"
           }
         }
-        response = ErrorMessage.new(id: "request_id", error: error)
+        response = ErrorResponse.new(id: "request_id", error: error)
         assert_equal "request_id", response.id
         assert_equal error, response.error.to_h
       end
 
       def test_initialize_with_null_id
         error = {code: -32600, message: "Invalid Request"}
-        response = ErrorMessage.new(id: nil, error:)
+        response = ErrorResponse.new(id: nil, error:)
         assert_nil response.id
         assert_equal error, response.error.to_h
       end
 
       def test_to_h
         error = {code: -32600, message: "Invalid Request"}
-        response = ErrorMessage.new(id: "request_id", error: error)
+        response = ErrorResponse.new(id: "request_id", error: error)
         expected = {
           jsonrpc: "2.0",
           id: "request_id",
@@ -47,7 +47,7 @@ module Protocol
 
       def test_to_h_with_null_id
         error = {code: -32700, message: "Parse error"}
-        response = ErrorMessage.new(id: nil, error: error)
+        response = ErrorResponse.new(id: nil, error: error)
         expected = {
           jsonrpc: "2.0",
           id: nil,
@@ -58,7 +58,7 @@ module Protocol
 
       def test_as_json
         error = {code: -32600, message: "Invalid Request"}
-        response = ErrorMessage.new(id: "request_id", error: error)
+        response = ErrorResponse.new(id: "request_id", error: error)
         expected = {
           jsonrpc: "2.0",
           id: "request_id",
@@ -68,12 +68,12 @@ module Protocol
       end
 
       def test_id
-        response = ErrorMessage.new(id: "request_id", error: {code: -32600, message: "Error"})
+        response = ErrorResponse.new(id: "request_id", error: {code: -32600, message: "Error"})
         assert_equal "request_id", response.id
       end
 
       def test_id_nil
-        response = ErrorMessage.new(id: nil, error: {code: -32600, message: "Error"})
+        response = ErrorResponse.new(id: nil, error: {code: -32600, message: "Error"})
         assert_nil response.id
       end
     end

@@ -3,14 +3,12 @@
 # Released under the MIT License.
 # Copyright 2025 by Martin Emde
 
-require_relative "message"
-
 module Protocol
   module Jsonrpc
-    NotificationMessage = Data.define(:method, :params) do
+    Notification = Data.define(:method, :params, :jsonrpc) do
       include Message
 
-      def initialize(method:, params: nil)
+      def initialize(method:, params: nil, jsonrpc: JSONRPC_VERSION)
         super
 
         unless method.is_a?(String)
@@ -22,16 +20,23 @@ module Protocol
       end
 
       def to_h
-        h = super.merge(method:)
-        h[:params] = params if params
+        h = super
+        h.delete(:params) if params.nil?
         h
       end
 
+      # Compatibility with the Message interface, Notifications have no ID
       def id = nil
 
-      def reply = nil
+      # Compatibility with the Request
+      # Yields the notificatino for processing but ignores the result
+      def reply(*, &)
+        yield self if block_given?
+        nil # notification always returns nil
+      end
 
-      def response? = false
+
+      def notification? = true
     end
   end
 end

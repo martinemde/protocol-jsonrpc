@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "protocol/jsonrpc/request_message"
+require "protocol/jsonrpc/request"
 
 module Protocol
   module Jsonrpc
     class RequestTest < Minitest::Test
       def test_with_required_parameters
-        request = RequestMessage.new(method: "test_method")
+        request = Request.new(method: "test_method")
         assert_equal "test_method", request.method
         assert_nil request.params
         refute_nil request.id
@@ -22,7 +22,7 @@ module Protocol
       end
 
       def test_with_all_parameters
-        request = RequestMessage.new(
+        request = Request.new(
           method: "test_method",
           params: {foo: "bar"},
           id: "custom_id"
@@ -42,7 +42,7 @@ module Protocol
       end
 
       def test_with_array_params
-        request = RequestMessage.new(
+        request = Request.new(
           method: "test_method",
           params: [1, 2, 3],
           id: "custom_id"
@@ -63,34 +63,34 @@ module Protocol
 
       def test_raises_on_nil_id
         error = assert_raises(InvalidRequestError) do
-          RequestMessage.new(method: "test_method", id: nil)
+          Request.new(method: "test_method", id: nil)
         end
         assert_match(/ID must be a string or number/, error.message)
       end
 
       def test_id
-        request = RequestMessage.new(method: "test_method")
+        request = Request.new(method: "test_method")
         refute_nil request.id
       end
 
       def test_empty_params
-        request = RequestMessage.new(method: "test_method", params: [])
+        request = Request.new(method: "test_method", params: [])
         assert_equal [], request.to_h[:params]
 
-        request = RequestMessage.new(method: "test_method", params: {})
+        request = Request.new(method: "test_method", params: {})
         assert_equal({}, request.to_h[:params])
       end
 
       def test_invalid_method
         error = assert_raises(InvalidRequestError) do
-          RequestMessage.new(method: 123)
+          Request.new(method: 123)
         end
         assert_match(/Method must be a string/, error.message)
       end
 
       def test_invalid_params
         error = assert_raises(InvalidRequestError) do
-          RequestMessage.new(method: "test_method", params: "invalid")
+          Request.new(method: "test_method", params: "invalid")
         end
         assert_match(/Params must be an array or object/, error.message)
       end

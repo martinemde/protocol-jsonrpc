@@ -6,18 +6,15 @@
 require "json"
 require "securerandom"
 require "timeout"
-require_relative "error"
 
 module Protocol
   module Jsonrpc
-    # JsonrpcMessage provides stateless operations for creating and validating JSON-RPC messages.
+    # Protocol::Jsonrpc::Message provides operations for creating and validating JSON-RPC messages.
     # This class handles the pure functional aspects of JSON-RPC like:
     # - Creating properly formatted request/notification messages
     # - Validating incoming messages
     # - Parsing responses and errors
     module Message
-      JSONRPC_VERSION = "2.0"
-
       class << self
         # Validate, and return the JSON-RPC message or batch
         # @param data [Hash, Array] The parsed message
@@ -29,58 +26,34 @@ module Protocol
           when Hash
             from_hash(data)
           when Array
-            from_array(data)
+            Batch.load(data)
           else
-            raise InvalidRequestError.new("Invalid request object", data: data.inspect)
-          end
-        end
-
-        # This is wrong. It seems like we need something more like
-        # an enumerator where we can run the full parse, handle, response
-        # cycle for each item in the array, aggregating the results and
-        # errors and then returning the array.
-        #
-        # The problem is that the errors should get raised and then
-        # handled which turns them into ErrorMessages and then the errors
-        # get returned to the client.
-        #
-        # Ideally this array handling would be invisible to the connection
-        # which would just handle one at a time with the array wrapper
-        # being applied by a single place that handles the batching.
-        def from_array(array)
-          raise InvalidRequestError.new("Empty batch", data: array.inspect) if array.empty?
-
-          array.map do |msg|
-            from_hash(msg)
-          rescue => e
-            Error.wrap(e)
+            InvalidMessage.new(data: data.inspect)
           end
         end
 
         # @param parsed [Hash] The parsed message
         # @return [Message] The parsed message
         def from_hash(parsed)
-          raise InvalidRequestError.new("Request is not an object", data: parsed) unless parsed.is_a?(Hash)
-          raise InvalidRequestError.new("Unexpected JSON-RPC version", data: parsed) unless parsed[:jsonrpc] == JSONRPC_VERSION
+          return InvalidMessage.new(data: parsed.inspect) unless parsed.is_a?(Hash)
+          jsonrpc = parsed[:jsonrpc]
 
           case parsed
           in { id:, error: }
-            ErrorMessage.new(id:, error: Error.from_message(**error))
+            ErrorResponse.new(id:, error: Error.from_message(**error), jsonrpc:)
           in { id:, result: }
-            ResponseMessage.new(id:, result:)
+            Response.new(id:, result:, jsonrpc:)
           in { id:, method: }
-            RequestMessage.new(id:, method:, params: parsed[:params])
+            Request.new(id:, method:, params: parsed[:params], jsonrpc:)
           in { method: }
-            NotificationMessage.new(method:, params: parsed[:params])
+            Notification.new(method:, params: parsed[:params], jsonrpc:)
           else
-            raise ParseError.new("Unknown message: #{parsed.inspect}", data: parsed)
+            InvalidMessage.new(data: parsed.inspect)
           end
+        rescue StandardError => error
+          InvalidMessage.new(error:, data: parsed.inspect)
         end
       end
-
-      def to_h = {jsonrpc: JSONRPC_VERSION}
-
-      def to_hash = to_h
 
       def as_json = to_h
 
@@ -88,17 +61,20 @@ module Protocol
 
       def to_s = to_json
 
+      # Is this a request? (Request)
+      def request? = false
+
+      # Is this a notification? (Notification)
+      def notification? = false
+
+      # Is this a response to a request? (Error or Response)
       def response? = false
 
-      def match?(message) = false
+      # Is this an error response? (ErrorResponse)
+      def error? = false
 
-      def reply(result_or_error)
-        if result_or_error.is_a?(StandardError)
-          ErrorMessage.new(id:, error: result_or_error)
-        else
-          ResponseMessage.new(id:, result: result_or_error)
-        end
-      end
+      # Is this an invalid message? (InvalidMessage)
+      def invalid? = false
     end
   end
 end

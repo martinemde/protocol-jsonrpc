@@ -3,8 +3,6 @@
 # Released under the MIT License.
 # Copyright 2025 by Martin Emde
 
-require_relative "message"
-
 module Protocol
   module Jsonrpc
     class Connection
@@ -22,24 +20,22 @@ module Protocol
         @framer.close
       end
 
-      # Read a message from the framer
-      # @yield [Protocol::Jsonrpc::Message] The read message
-      # @return [Protocol::Jsonrpc::Message] The read message
+      # Read the next message or batch of messages from the framer
+      # @yield [Protocol::Jsonrpc::Message] Each message is yielded to the block
+      # @return [Protocol::Jsonrpc::Message, Protocol::Jsonrpc::Batch] The message or batch of messages
       def read(&block)
         flush
         frame = read_frame
-        message = Message.load(frame.unpack)
-        yield message if block_given?
-        message
+        Message.load(frame.unpack)
+      rescue StandardError => e
+        InvalidMessage.new(error: e)
       end
 
       # Write a message to the framer
-      # @param message [Protocol::Jsonrpc::Message, Array<Protocol::Jsonrpc::Message>] The message(s) to write
+      # @param message [Protocol::Jsonrpc::Message, Array<Protocol::Jsonrpc::Message>, Batch] The message(s) to write
       # @return [Boolean] True if successful
       def write(message)
-        frame = Frame.pack(message)
-        write_frame(frame)
-        true
+        write_frame Frame.pack(message)
       end
 
       # Low level read a frame from the framer
