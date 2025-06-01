@@ -7,102 +7,97 @@ require "test_helper"
 require "protocol/jsonrpc"
 require "protocol/jsonrpc/error"
 require "protocol/jsonrpc/frame"
+require "stringio"
 
 module Protocol
   module Jsonrpc
     class FrameTest < Minitest::Test
-      def test_parse_valid_request
-        json = '{"jsonrpc":"2.0","id":"123","method":"test_method","params":{"foo":"bar"}}'
-        data = Frame.new(json:).unpack
+      def test_read_from_stream
+        stream = StringIO.new('{"jsonrpc":"2.0","method":"test"}')
+        frame = Frame.read(stream)
 
-        assert_equal "123", data[:id]
-        assert_equal "test_method", data[:method]
-        assert_equal({foo: "bar"}, data[:params])
+        assert_instance_of Frame, frame
+        assert_equal '{"jsonrpc":"2.0","method":"test"}', frame.raw_json
       end
 
-      def test_parse_valid_notification
-        json = '{"jsonrpc":"2.0","method":"test_notification"}'
-        data = Frame.new(json:).unpack
+      def test_read_from_stream_that_returns_nil
+        stream = StringIO.new("")
+        frame = Frame.read(stream)
 
-        assert_equal "test_notification", data[:method]
-        assert_nil data[:params]
-        assert_nil data[:id]
+        assert_nil frame
       end
 
-      def test_parse_valid_response
-        json = '{"jsonrpc":"2.0","id":"123","result":{"status":"success"}}'
-        data = Frame.new(json:).unpack
+      def test_pack_array_of_messages_or_hashes
+        message1 = Notification.new(method: "test1")
+        message2 = {"jsonrpc" => "2.0", "method" => "test2"}
+        frame = Frame.pack([message1, message2])
 
-        assert_equal "123", data[:id]
-        assert_equal({status: "success"}, data[:result])
+        assert_instance_of Frame, frame
+        parsed = JSON.parse(frame.raw_json)
+        assert_equal 2, parsed.size
+        assert_equal "test1", parsed[0]["method"]
+        assert_equal "test2", parsed[1]["method"]
       end
 
-      def test_parse_valid_error_response
-        json = '{"jsonrpc":"2.0","id":"123","error":{"code":-32600,"message":"Invalid Request"}}'
-        data = Frame.new(json:).unpack
+      def test_pack_array_with_object_not_responding_to_as_json
+        object_without_as_json = Object.new
 
-        assert_equal "123", data[:id]
-        assert_equal({code: -32600, message: "Invalid Request"}, data[:error].to_h)
+        assert_raises(ArgumentError) do
+          Frame.pack([object_without_as_json])
+        end
       end
 
-      def test_parse_valid_error_response_with_nil_id
-        json = '{"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid Request"}}'
-        data = Frame.new(json:).unpack
+      def test_pack_hash
+        hash = {"jsonrpc" => "2.0", "method" => "test"}
+        frame = Frame.pack(hash)
 
-        assert_nil data[:id]
-        assert_equal({code: -32600, message: "Invalid Request"}, data[:error].to_h)
+        assert_instance_of Frame, frame
+        parsed = JSON.parse(frame.raw_json)
+        assert_equal "2.0", parsed["jsonrpc"]
+        assert_equal "test", parsed["method"]
       end
 
-      def test_parse_valid_batch_request
-        json = "[" \
-          '{"jsonrpc":"2.0","id":"123","method":"test_method","params":{"foo":"bar"}},' \
-          '{"jsonrpc":"2.0","id":"456","method":"test_method","params":{"foo":"bar"}}' \
-        "]"
-        data = Frame.new(json:).unpack
+      def test_pack_message
+        message = Notification.new(method: "test")
+        frame = Frame.pack(message)
 
-        assert_equal 2, data.size
-        assert_equal "123", data[0][:id]
-        assert_equal "test_method", data[0][:method]
-        assert_equal({foo: "bar"}, data[0][:params])
-        assert_equal "456", data[1][:id]
-        assert_equal "test_method", data[1][:method]
-        assert_equal({foo: "bar"}, data[1][:params])
+        assert_instance_of Frame, frame
+        parsed = JSON.parse(frame.raw_json)
+        assert_equal "2.0", parsed["jsonrpc"]
+        assert_equal "test", parsed["method"]
       end
 
-      def test_parse_valid_batch_response
-        json = "[" \
-          '{"jsonrpc":"2.0","id":"123","result":{"status":"success"}},' \
-          '{"jsonrpc":"2.0","id":"456","result":{"status":"success"}}' \
-        "]"
-        data = Frame.new(json:).unpack
-
-        assert_equal 2, data.size
-        assert_equal "123", data[0][:id]
-        assert_equal({status: "success"}, data[0][:result])
-        assert_equal "456", data[1][:id]
-        assert_equal({status: "success"}, data[1][:result])
+      def test_pack_invalid_object_type
+        error = assert_raises(ArgumentError) do
+          Frame.pack("invalid string")
+        end
+        assert_match(/Invalid message type: String/, error.message)
       end
 
-      def test_parse_valid_batch_mixed_response_and_error_response
-        json = "[" \
-          '{"jsonrpc":"2.0","id":"123","result":{"status":"success"}},' \
-          '{"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}' \
-        "]"
-        data = Frame.new(json:).unpack
+      def test_unpack_valid_json
+        frame = Frame.new(raw_json: '{"jsonrpc":"2.0","method":"test","id":"123"}')
+        data = frame.unpack
 
-        assert_equal 2, data.size
-        assert_equal "123", data[0][:id]
-        assert_equal({status: "success"}, data[0][:result])
-        assert_nil data[1][:id]
-        assert_equal({code: -32600, message: "Invalid request"}, data[1][:error].to_h)
+        assert_equal({jsonrpc: "2.0", method: "test", id: "123"}, data)
       end
 
-      def test_invalid_json
-        json = "{invalid json}"
+      def test_unpack_invalid_json_raises_error
+        frame = Frame.new(raw_json: '{invalid json}')
         error = assert_raises(ParseError) do
-          Frame.new(json:).unpack
+          frame.unpack
         end
         assert_match(/Failed to parse message/, error.message)
+        assert_equal '{invalid json}', error.data
+      end
+
+      def test_write_to_stream
+        stream = StringIO.new
+        frame = Frame.new(raw_json: '{"jsonrpc":"2.0","method":"test"}')
+        frame.write(stream)
+
+        stream.rewind
+        written_content = stream.read
+        assert_equal %({"jsonrpc":"2.0","method":"test"}\n), written_content
       end
     end
   end
