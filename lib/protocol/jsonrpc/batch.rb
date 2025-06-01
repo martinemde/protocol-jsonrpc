@@ -14,11 +14,12 @@ module Protocol
       end
 
       def to_a = messages
-      alias to_ary to_a
+      alias_method :to_ary, :to_a
 
       def as_json = to_a.map(&:as_json)
+
       def to_json(...) = JSON.generate(to_a.map(&:as_json), ...)
-      alias to_s to_json
+      alias_method :to_s, :to_json
 
       def reply(&block)
         to_a.filter_map do |message|

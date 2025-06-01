@@ -22,7 +22,7 @@ module Protocol
         invalid_message = InvalidMessage.new(error: error_hash, id: "req-456")
 
         assert_instance_of InvalidRequestError, invalid_message.error
-        assert_equal -32600, invalid_message.error.code
+        assert_equal(-32600, invalid_message.error.code)
         assert_equal "Invalid Request", invalid_message.error.message
         assert_equal "req-456", invalid_message.id
       end

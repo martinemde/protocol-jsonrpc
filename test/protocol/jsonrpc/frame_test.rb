@@ -84,7 +84,7 @@ module Protocol
       end
 
       def test_unpack_invalid_json_raises_error
-        frame = Frame.new(raw_json: '{invalid json}')
+        frame = Frame.new(raw_json: "{invalid json}")
         assert_raises(JSON::ParserError) do
           frame.unpack
         end

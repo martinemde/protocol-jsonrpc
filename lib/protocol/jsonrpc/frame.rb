@@ -50,6 +50,7 @@ module Protocol
       end
 
       def to_json(...) = raw_json
+
       def to_s = raw_json
 
       # Write the frame to a stream

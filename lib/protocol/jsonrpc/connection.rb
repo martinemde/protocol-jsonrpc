@@ -27,7 +27,7 @@ module Protocol
         flush
         frame = read_frame
         Message.load(frame.unpack)
-      rescue StandardError => e
+      rescue => e
         InvalidMessage.new(error: e)
       end
 

@@ -50,7 +50,7 @@ module Protocol
           else
             InvalidMessage.new(data: parsed.inspect)
           end
-        rescue StandardError => error
+        rescue => error
           InvalidMessage.new(error:, data: parsed.inspect)
         end
       end

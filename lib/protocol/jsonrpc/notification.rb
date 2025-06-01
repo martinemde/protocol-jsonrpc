@@ -35,7 +35,6 @@ module Protocol
         nil # notification always returns nil
       end
 
-
       def notification? = true
     end
   end

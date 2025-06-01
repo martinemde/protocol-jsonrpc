@@ -36,7 +36,7 @@ module Protocol
         if args.empty? && block_given?
           begin
             result_or_error = yield self
-          rescue StandardError => error
+          rescue => error
             return ErrorResponse.new(id:, error:)
           end
         elsif args.length == 1
