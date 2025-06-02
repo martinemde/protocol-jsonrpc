@@ -63,8 +63,10 @@ module Protocol
           ParseError.new("Parse error: #{error.message}", data:, id:)
         in StandardError
           InternalError.new(error.message, data:, id:)
-        else
+        in Exception
           raise error
+        else
+          raise ArgumentError, "Unknown error type: #{error.class}"
         end
       end
 

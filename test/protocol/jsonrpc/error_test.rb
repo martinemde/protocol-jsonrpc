@@ -223,7 +223,7 @@ module Protocol
 
       def test_wrap_with_unknown_type_raises
         unknown_object = Object.new
-        assert_raises(Object) do
+        assert_raises(ArgumentError) do
           Error.wrap(unknown_object)
         end
       end
