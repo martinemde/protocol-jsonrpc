@@ -29,10 +29,12 @@ module Protocol
       def id = nil
 
       # Compatibility with the Request
-      # Yields the notificatino for processing but ignores the result
+      # Yields the notification for processing but ignores the result
       def reply(*, &)
         yield self if block_given?
-        nil # notification always returns nil
+        nil
+      rescue
+        nil # JSON-RPC 2.0 spec says notifications should never return, even on error.
       end
 
       def notification? = true

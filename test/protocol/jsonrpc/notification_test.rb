@@ -82,6 +82,21 @@ module Protocol
         end
         assert_match(/Params must be an array or object/, error.message)
       end
+
+      def test_reply_always_returns_nil
+        notification = Notification.new(method: "test_notification")
+        assert_nil notification.reply("void")
+      end
+
+      def test_reply_block_always_returns_nil
+        notification = Notification.new(method: "test_notification")
+        assert_nil notification.reply { "void" }
+      end
+
+      def test_reply_that_raises_error
+        notification = Notification.new(method: "test_notification")
+        assert_nil notification.reply { raise "Ignore failures!" }
+      end
     end
   end
 end
