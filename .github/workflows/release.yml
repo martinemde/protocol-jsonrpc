@@ -1,9 +1,18 @@
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+  workflow_run:
+    workflows: ["Main"]
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
   push:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
       contents: write
