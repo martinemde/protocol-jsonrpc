@@ -26,7 +26,9 @@ module Protocol
       def read(&block)
         flush
         frame = read_frame
-        Message.load(frame.unpack)
+        message = Message.load(frame.unpack)
+        yield message if block_given?
+        message
       rescue => e
         InvalidMessage.new(error: e)
       end

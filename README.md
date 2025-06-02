@@ -52,10 +52,8 @@ This wraps a framer and provides higher-level methods for communication.
 Here's a basic example showing how to create a JSON-RPC connection over a socket pair:
 
 ```ruby
-require 'protocol/jsonrpc'
-require 'protocol/jsonrpc/connection'
-require 'protocol/jsonrpc/framer'
-require 'socket'
+require "protocol/jsonrpc"
+require "socket"
 
 # Create a socket pair for testing
 client_socket, server_socket = UNIXSocket.pair
@@ -179,6 +177,13 @@ Typically created by replying to a request:
 # From a request object
 response = request.reply(19)
 
+response = request.reply do |message|
+  message.params.sum if message.request? && message.method == "add"
+  if message.method == "fail"
+    raise "Oops, we failed" # gets turned into a error response
+  end
+end
+
 # Or directly
 response = Protocol::Jsonrpc::Response.new(
   result: 19,
@@ -194,6 +199,11 @@ For error responses:
 # Create from an error object
 error = Protocol::Jsonrpc::InvalidParamsError.new("Invalid parameters")
 error_response = request.reply(error)
+
+# Create from a reply that raises
+response = request.reply do |message|
+  raise "Oops" # Returns an InternalError response
+end
 ```
 
 Error types represent the standard JSON-RPC error codes:
@@ -204,6 +214,14 @@ Protocol::Jsonrpc::InvalidRequestError
 Protocol::Jsonrpc::MethodNotFoundError
 Protocol::Jsonrpc::InvalidParamsError
 Protocol::Jsonrpc::InternalError
+```
+
+Most of the errors happen automatically, but some must be triggered manually.
+
+```ruby
+response = request.reply do |message|
+  raise Protocol::Jsonrpc::MethodNotFoundError, "We don't support any methods"
+end
 ```
 
 ## Batch Processing

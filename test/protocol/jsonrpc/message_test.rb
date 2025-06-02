@@ -4,9 +4,6 @@
 # Copyright 2025 by Martin Emde
 
 require "test_helper"
-require "protocol/jsonrpc"
-require "protocol/jsonrpc/message"
-require "protocol/jsonrpc/error"
 
 module Protocol
   module Jsonrpc
@@ -186,6 +183,15 @@ module Protocol
         assert_equal "123", message.id
         assert_equal "test_method", message.method
         assert_nil message.params
+      end
+
+      def test_from_hash_with_non_hash_returns_invalid_message
+        # Test the guard clause that checks if parsed is a Hash
+        message = Message.from_hash("not a hash")
+
+        assert_instance_of InvalidMessage, message
+        assert_equal %("not a hash"), message.error.data
+        assert_instance_of InvalidRequestError, message.error
       end
     end
   end

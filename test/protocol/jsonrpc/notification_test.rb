@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "protocol/jsonrpc/notification"
 
 module Protocol
   module Jsonrpc
     class NotificationTest < Minitest::Test
+      # Trigger autoloading of Error and all its subclasses
+
       def test_initialize_with_required_parameters
         notification = Notification.new(method: "test_notification")
         assert_equal "test_notification", notification.method
@@ -81,6 +82,21 @@ module Protocol
           Notification.new(method: "test_notification", params: "invalid")
         end
         assert_match(/Params must be an array or object/, error.message)
+      end
+
+      def test_reply_always_returns_nil
+        notification = Notification.new(method: "test_notification")
+        assert_nil notification.reply("void")
+      end
+
+      def test_reply_block_always_returns_nil
+        notification = Notification.new(method: "test_notification")
+        assert_nil notification.reply { "void" }
+      end
+
+      def test_reply_that_raises_error
+        notification = Notification.new(method: "test_notification")
+        assert_nil notification.reply { raise "Ignore failures!" }
       end
     end
   end

@@ -4,7 +4,6 @@
 # Copyright 2025 by Martin Emde
 
 require "test_helper"
-require "protocol/jsonrpc/response"
 
 module Protocol
   module Jsonrpc
@@ -39,6 +38,12 @@ module Protocol
         response = Response.new(id: "request_id", result: nil)
         assert_equal "request_id", response.id
         assert_nil response.result
+      end
+
+      def test_initialize_with_bad_id
+        assert_raises(InvalidRequestError) do
+          Response.new(id: Time.now, result: "success")
+        end
       end
 
       def test_to_h

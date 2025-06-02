@@ -123,6 +123,161 @@ module Protocol
         error = InternalError.new("Internal error")
         assert_equal(Error::INTERNAL_ERROR, error.code)
       end
+
+      # Tests for Error.wrap method
+      def test_wrap_with_nil
+        error = Error.wrap(nil)
+        assert_instance_of(InvalidRequestError, error)
+        assert_equal("Invalid Request", error.message)
+      end
+
+      def test_wrap_with_nil_and_data
+        error = Error.wrap(nil, data: {reason: "missing"}, id: "req-123")
+        assert_instance_of(InvalidRequestError, error)
+        assert_equal({reason: "missing"}, error.data)
+        assert_equal("req-123", error.id)
+      end
+
+      def test_wrap_with_string
+        error = Error.wrap("Something went wrong")
+        assert_instance_of(InternalError, error)
+        assert_equal("Something went wrong", error.message)
+      end
+
+      def test_wrap_with_string_and_data
+        error = Error.wrap("Custom error", data: {details: "info"}, id: "req-456")
+        assert_instance_of(InternalError, error)
+        assert_equal("Custom error", error.message)
+        assert_equal({details: "info"}, error.data)
+        assert_equal("req-456", error.id)
+      end
+
+      def test_wrap_with_hash
+        hash = {code: Error::PARSE_ERROR, message: "Parse failed"}
+        error = Error.wrap(hash)
+        assert_instance_of(ParseError, error)
+        assert_equal("Parse failed", error.message)
+      end
+
+      def test_wrap_with_hash_string_keys
+        hash = {"code" => Error::INVALID_PARAMS, "message" => "Bad params"}
+        error = Error.wrap(hash, id: "req-789")
+        assert_instance_of(InvalidParamsError, error)
+        assert_equal("Bad params", error.message)
+        assert_equal("req-789", error.id)
+      end
+
+      def test_wrap_with_existing_error
+        original = ParseError.new("Original error", id: "original-id")
+        wrapped = Error.wrap(original)
+        assert_same(original, wrapped)
+      end
+
+      def test_wrap_with_existing_error_updates_data
+        original = ParseError.new("Original error")
+        wrapped = Error.wrap(original, data: {new: "data"}, id: "new-id")
+        assert_same(original, wrapped)
+        assert_equal({new: "data"}, wrapped.data)
+        assert_equal("new-id", wrapped.id)
+      end
+
+      def test_wrap_with_existing_error_preserves_existing_data
+        original = ParseError.new("Original error", data: {existing: "data"}, id: "existing-id")
+        wrapped = Error.wrap(original, data: {new: "data"}, id: "new-id")
+        assert_same(original, wrapped)
+        assert_equal({existing: "data"}, wrapped.data)
+        assert_equal("existing-id", wrapped.id)
+      end
+
+      def test_wrap_with_json_parser_error
+        json_error = JSON::ParserError.new("unexpected token")
+        error = Error.wrap(json_error)
+        assert_instance_of(ParseError, error)
+        assert_equal("Parse error: unexpected token", error.message)
+      end
+
+      def test_wrap_with_json_parser_error_and_data
+        json_error = JSON::ParserError.new("invalid JSON")
+        error = Error.wrap(json_error, data: {input: "bad json"}, id: "req-json")
+        assert_instance_of(ParseError, error)
+        assert_equal("Parse error: invalid JSON", error.message)
+        assert_equal({input: "bad json"}, error.data)
+        assert_equal("req-json", error.id)
+      end
+
+      def test_wrap_with_standard_error
+        std_error = StandardError.new("Something broke")
+        error = Error.wrap(std_error)
+        assert_instance_of(InternalError, error)
+        assert_equal("Something broke", error.message)
+      end
+
+      def test_wrap_with_standard_error_and_data
+        std_error = RuntimeError.new("Runtime failure")
+        error = Error.wrap(std_error, data: {stack: "trace"}, id: "req-runtime")
+        assert_instance_of(InternalError, error)
+        assert_equal("Runtime failure", error.message)
+        assert_equal({stack: "trace"}, error.data)
+        assert_equal("req-runtime", error.id)
+      end
+
+      def test_wrap_with_unknown_type_raises
+        unknown_object = Object.new
+        assert_raises(ArgumentError) do
+          Error.wrap(unknown_object)
+        end
+      end
+
+      # Tests for Error#[] accessor method
+      def test_bracket_accessor_code
+        error = ParseError.new("Test error")
+        assert_equal(Error::PARSE_ERROR, error[:code])
+      end
+
+      def test_bracket_accessor_message
+        error = ParseError.new("Test message")
+        assert_equal("Test message", error[:message])
+      end
+
+      def test_bracket_accessor_data
+        error = ParseError.new("Test error", data: {key: "value"})
+        assert_equal({key: "value"}, error[:data])
+      end
+
+      def test_bracket_accessor_data_nil
+        error = ParseError.new("Test error")
+        assert_nil(error[:data])
+      end
+
+      def test_bracket_accessor_invalid_key
+        error = ParseError.new("Test error")
+        assert_raises(KeyError) do
+          error[:invalid]
+        end
+      end
+
+      # Tests for Error#initialize edge cases
+      def test_initialize_with_empty_string_message
+        error = ParseError.new("")
+        assert_equal("Parse error", error.message) # Should use default message
+      end
+
+      def test_initialize_with_nil_message
+        error = ParseError.new(nil)
+        assert_equal("Parse error", error.message) # Should use default message
+      end
+
+      def test_initialize_with_no_message
+        error = ParseError.new
+        assert_equal("Parse error", error.message) # Should use default message
+      end
+
+      # Tests for Error#to_h without data
+      def test_to_h_without_data
+        error = ParseError.new("Test error")
+        expected = {code: Error::PARSE_ERROR, message: "Test error"}
+        assert_equal(expected, error.to_h)
+      end
     end
   end
 end

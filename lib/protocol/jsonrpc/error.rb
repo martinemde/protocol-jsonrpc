@@ -24,8 +24,10 @@ module Protocol
       ).freeze
 
       # Factory method to create the appropriate error type
+      # @param code [Integer] The JSON-RPC error code
+      # @param message [String] The error message
+      # @param data [#as_json, #to_json] Serializable data to return to the client
       # @param id [String, Integer] The request ID
-      # @param error [Hash] The error data from the JSON-RPC response
       # @return [Error] The appropriate error instance
       def self.from_message(code:, message:, data: nil, id: nil)
         case code
@@ -54,17 +56,22 @@ module Protocol
           error = error.transform_keys(&:to_sym)
           from_message(id: id, data: data, **error)
         in Jsonrpc::Error
+          error.data ||= data if data
+          error.id ||= id if id
           error
         in JSON::ParserError
           ParseError.new("Parse error: #{error.message}", data:, id:)
         in StandardError
           InternalError.new(error.message, data:, id:)
-        else
+        in Exception
           raise error
+        else
+          raise ArgumentError, "Unknown error type: #{error.class}"
         end
       end
 
-      attr_reader :data, :code, :id
+      attr_accessor :data, :id
+      attr_reader :code
 
       def initialize(message = nil, data: nil, id: nil)
         message = nil if message&.empty?

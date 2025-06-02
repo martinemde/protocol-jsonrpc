@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require "bundler/gem_tasks"
-require "minitest/test_task"
 require "standard/rake"
+require "rake/testtask"
 
-Minitest::TestTask.create
+Rake::TestTask.new(:test) do |test|
+  test.libs << "lib" << "test"
+  test.pattern = "test/**/*_test.rb"
+end
 
 task default: %i[test standard]
 task lint: %i[standard]
-
-# Load custom tasks
-Dir.glob("lib/tasks/**/*.rake").each { |r| load r }

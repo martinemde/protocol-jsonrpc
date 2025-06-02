@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- If a reply block for a Notification raises, suppress the error as defined in the spec
+
 ## [0.2.0] - 2025-06-01
 
 **Breaking changes**: As I work towarsd a 1.0.0 release, I've changed the interface to ensure a uniform interface for [JSON-RPC 2.0 batch processing](https://www.jsonrpc.org/specification#batch). I believe we have a much more robust implementation now, so I will try to stay more consistent, but please be cautious upgrading until 1.0.0 is released and we finalize the interface.

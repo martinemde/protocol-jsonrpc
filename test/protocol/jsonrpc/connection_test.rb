@@ -3,10 +3,7 @@
 # Released under the MIT License.
 # Copyright 2025 by Martin Emde
 
-require_relative "../../test_helper"
-require "socket"
-require "protocol/jsonrpc"
-require "protocol/jsonrpc/framer"
+require "test_helper"
 
 module Protocol
   module Jsonrpc
@@ -349,6 +346,50 @@ module Protocol
         assert_equal [1, 2, 4], message[0].params
         assert_equal "notify_hello", message[1].method
         assert_equal [7], message[1].params
+      end
+
+      def test_read_with_block_yields_message
+        request = Request.new(method: "test", params: [1, 2])
+        @client.write(request)
+
+        yielded_message = nil
+        returned_message = @server.read do |message|
+          yielded_message = message
+        end
+
+        assert_equal request, yielded_message
+        assert_equal request, returned_message
+        assert_same yielded_message, returned_message
+      end
+
+      def test_read_frame_with_block_yields_frame
+        request = Request.new(method: "test", params: [1, 2])
+        @client.write(request)
+
+        yielded_frame = nil
+        returned_frame = @server.read_frame do |frame|
+          yielded_frame = frame
+        end
+
+        assert_instance_of Frame, yielded_frame
+        assert_instance_of Frame, returned_frame
+        assert_same yielded_frame, returned_frame
+
+        # Verify the frame contains the expected data
+        message = Message.load(yielded_frame.unpack)
+        assert_equal request, message
+      end
+
+      def test_close_calls_framer_close
+        # Create a mock framer to verify close is called
+        mock_framer = Object.new
+        close_called = false
+        mock_framer.define_singleton_method(:close) { close_called = true }
+
+        connection = Connection.new(mock_framer)
+        connection.close
+
+        assert close_called
       end
     end
   end
