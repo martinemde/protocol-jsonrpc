@@ -179,9 +179,6 @@ response = request.reply(19)
 
 response = request.reply do |message|
   message.params.sum if message.request? && message.method == "add"
-  if message.method == "fail"
-    raise "Oops, we failed" # gets turned into a error response
-  end
 end
 
 # Or directly
