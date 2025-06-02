@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.2.1] - 2025-06-01
+
 - If a reply block for a Notification raises, suppress the error as defined in the spec
 
 ## [0.2.0] - 2025-06-01
