@@ -4,10 +4,6 @@
 # Copyright 2025 by Martin Emde
 
 require "test_helper"
-require "protocol/jsonrpc"
-require "protocol/jsonrpc/error"
-require "protocol/jsonrpc/frame"
-require "stringio"
 
 module Protocol
   module Jsonrpc

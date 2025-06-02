@@ -36,16 +36,17 @@ module Protocol
         # @return [Message] The parsed message
         def from_hash(parsed)
           return InvalidMessage.new(data: parsed.inspect) unless parsed.is_a?(Hash)
+
           jsonrpc = parsed[:jsonrpc]
 
           case parsed
-          in { id:, error: }
+          in {id:, error:}
             ErrorResponse.new(id:, error: Error.from_message(**error), jsonrpc:)
-          in { id:, result: }
+          in {id:, result:}
             Response.new(id:, result:, jsonrpc:)
-          in { id:, method: }
+          in {id:, method:}
             Request.new(id:, method:, params: parsed[:params], jsonrpc:)
-          in { method: }
+          in {method:}
             Notification.new(method:, params: parsed[:params], jsonrpc:)
           else
             InvalidMessage.new(data: parsed.inspect)

@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "protocol/jsonrpc/notification"
 
 module Protocol
   module Jsonrpc
     class NotificationTest < Minitest::Test
+      # Trigger autoloading of Error and all its subclasses
+
       def test_initialize_with_required_parameters
         notification = Notification.new(method: "test_notification")
         assert_equal "test_notification", notification.method

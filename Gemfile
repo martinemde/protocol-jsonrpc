@@ -6,7 +6,8 @@ source "https://rubygems.org"
 gemspec
 
 gem "irb"
-gem "rake", "~> 13.0"
+gem "rake"
 
-gem "minitest", "~> 5.0"
-gem "standard", "~> 1.3"
+gem "minitest"
+gem "standard"
+gem "simplecov", require: false

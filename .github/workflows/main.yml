@@ -29,6 +29,10 @@ jobs:
           bundler-cache: true
       - name: Run the tests
         run: bundle exec rake test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   lint:
     runs-on: ubuntu-latest

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "protocol/jsonrpc/error_response"
 
 module Protocol
   module Jsonrpc
@@ -32,6 +31,12 @@ module Protocol
         response = ErrorResponse.new(id: nil, error:)
         assert_nil response.id
         assert_equal error, response.error.to_h
+      end
+
+      def test_initialize_with_bad_id
+        assert_raises(InvalidRequestError) do
+          ErrorResponse.new(id: Time.now, error: {code: -32600, message: "Invalid Request"})
+        end
       end
 
       def test_to_h
