@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-15
+
+- Require `json >= 2.19.9` to pick up the fix for CVE-2026-54696.
+- Update development dependencies (`erb` 6.0.7 for CVE-2026-41316, `json` 2.21.2).
+
 ## [0.2.1] - 2025-06-01
 
 - If a reply block for a Notification raises, suppress the error as defined in the spec
