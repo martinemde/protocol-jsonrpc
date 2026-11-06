@@ -8,6 +8,6 @@ gemspec
 gem "irb"
 gem "rake"
 
-gem "minitest"
+gem "minitest", "~> 5.27"
 gem "standard"
 gem "simplecov", require: false
