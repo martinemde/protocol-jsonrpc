@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     protocol-jsonrpc (0.2.2)
-      json (~> 2.19, >= 2.19.9)
+      json (>= 2.19.9, < 4.0)
 
 GEM
   remote: https://rubygems.org/
